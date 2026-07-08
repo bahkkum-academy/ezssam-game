@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>침묵의 눈 — 시험 · 수업 타이머</title>
+<style>
+  :root{
+    --abyss:#070510;
+    --abyss-2:#0f0b1d;
+    --abyss-3:#171028;
+    --scale-dark:#13352c;
+    --scale-wake:#2f8f6a;
+    --eye-calm:#ffd84d;
+    --eye-warm:#ff9e40;
+    --eye-rage:#ff3b30;
+    --candle:#ffb259;
+    --candle-glow:#ffd9a0;
+    --ink:#ece6d6;
+    --ink-dim:#9a93a8;
+    --line:rgba(236,230,214,.14);
+    --gold:#e9c46a;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--abyss);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* ===================== SETUP SCREEN ===================== */
+  #setup{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 24px;
+    background:
+      radial-gradient(140% 110% at 50% -10%, var(--abyss-3) 0%, var(--abyss-2) 40%, var(--abyss) 82%);
+    overflow-y:auto;
+    z-index:30;
+  }
+  #setup::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background:radial-gradient(60% 50% at 50% 38%, rgba(233,196,106,.05), transparent 70%);
+  }
+  .brand{ text-align:center; margin-bottom:38px; }
+  .brand .eyemark{
+    width:64px;height:64px;margin:0 auto 18px;
+    display:flex;align-items:center;justify-content:center;
+    filter:drop-shadow(0 0 16px rgba(233,196,106,.35));
+  }
+  .brand h1{
+    font-size:clamp(34px,7vw,58px);
+    font-weight:900; letter-spacing:.2em;
+    color:var(--ink);
+    text-shadow:0 0 34px rgba(233,196,106,.22);
+  }
+  .brand .sub{
+    margin-top:14px; font-size:clamp(13px,2.4vw,16px);
+    color:var(--ink-dim); letter-spacing:.05em; line-height:1.8;
+  }
+  .panel{
+    width:100%; max-width:560px;
+    background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.014));
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:34px 32px 36px;
+    backdrop-filter:blur(7px);
+    box-shadow:0 26px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .row-label{
+    font-size:12px; letter-spacing:.22em; color:var(--ink-dim);
+    text-transform:uppercase; margin-bottom:14px; display:flex; align-items:center; gap:12px;
+    white-space:nowrap;
+  }
+  .row-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .field{ margin-bottom:28px; }
+  .field:last-of-type{margin-bottom:0}
+
+  .seg{ display:flex; gap:8px; background:rgba(0,0,0,.3); padding:6px; border-radius:15px; }
+  .seg button{
+    flex:1; padding:12px 8px; border:0; border-radius:11px; cursor:pointer;
+    background:transparent; color:var(--ink-dim);
+    font-size:15px; font-weight:700; letter-spacing:.03em; transition:.22s;
+    font-family:inherit; white-space:nowrap;
+  }
+  .seg button.on{ background:linear-gradient(180deg,#2c2344,#211b34); color:var(--ink); box-shadow:0 2px 12px rgba(0,0,0,.4); }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; }
+  .chip{
+    padding:14px 6px; min-width:78px; flex:1;
+    border:1px solid var(--line); border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,.022); color:var(--ink);
+    font-size:18px; font-weight:800; letter-spacing:.02em; transition:.18s;
+    font-family:inherit; white-space:nowrap;
+  }
+  .chip small{display:block;font-size:11px;font-weight:600;color:var(--ink-dim);letter-spacing:.05em;margin-top:4px}
+  .chip:hover{border-color:rgba(233,196,106,.5);background:rgba(255,255,255,.04)}
+  .chip.on{
+    border-color:var(--gold);
+    background:linear-gradient(180deg, rgba(233,196,106,.18), rgba(233,196,106,.045));
+    box-shadow:0 0 0 1px rgba(233,196,106,.35) inset, 0 6px 20px rgba(233,196,106,.1);
+  }
+  .chip.on small{color:var(--gold)}
+
+  .custom{ display:flex; align-items:center; gap:12px; margin-top:16px; }
+  .custom input{
+    width:100px; padding:13px 14px; border-radius:12px;
+    border:1px solid var(--line); background:rgba(0,0,0,.32);
+    color:var(--ink); font-size:18px; font-weight:800; text-align:center;
+    font-family:inherit;
+  }
+  .custom input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(233,196,106,.14)}
+  .custom span{color:var(--ink-dim);font-size:14px;white-space:nowrap}
+
+  .sens{ display:flex; gap:8px; }
+  .sens button{
+    flex:1; padding:13px 6px; border-radius:13px; cursor:pointer;
+    border:1px solid var(--line); background:rgba(255,255,255,.022);
+    color:var(--ink-dim); font-size:13px; font-weight:700; transition:.18s;
+    font-family:inherit; white-space:nowrap;
+  }
+  .sens button .t{display:block;color:var(--ink);font-size:15px;font-weight:800;margin-bottom:3px}
+  .sens button:hover{border-color:rgba(233,196,106,.4)}
+  .sens button.on{ border-color:var(--gold); color:var(--gold); background:rgba(233,196,106,.08); box-shadow:0 0 0 1px rgba(233,196,106,.3) inset; }
+  .sens button.on .t{color:var(--gold)}
+
+  .start{
+    margin-top:32px; width:100%; padding:19px; border:0; border-radius:17px; cursor:pointer;
+    background:linear-gradient(180deg,#e2bf65,#c19a40 55%,#a87f30);
+    color:#1a1206; font-size:19px; font-weight:900; letter-spacing:.16em;
+    box-shadow:0 12px 34px rgba(168,127,48,.36), inset 0 1px 0 rgba(255,255,255,.4);
+    transition:.18s; font-family:inherit;
+  }
+  .start:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(168,127,48,.46), inset 0 1px 0 rgba(255,255,255,.45)}
+  .start:active{transform:translateY(0)}
+  .mic-note{
+    margin-top:18px; text-align:center; font-size:12.5px; color:var(--ink-dim);
+    line-height:1.8; letter-spacing:.02em;
+  }
+  .mic-note b{color:var(--gold);font-weight:700}
+
+  /* ===================== TIMER SCREEN ===================== */
+  #timer{ position:fixed; inset:0; display:none; z-index:20;
+    background:radial-gradient(135% 105% at 50% 128%, #1a1330 0%, var(--abyss-2) 34%, var(--abyss) 66%); }
+  #timer.show{display:block}
+  #timer::before{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:
+      radial-gradient(45% 38% at 50% 64%, rgba(64,40,96,.22), transparent 70%),
+      radial-gradient(80% 60% at 50% 120%, rgba(20,12,40,.5), transparent 60%);
+    animation:fog 22s ease-in-out infinite alternate;
+  }
+  #timer::after{
+    content:""; position:absolute; inset:0; z-index:8; pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 46%, transparent 56%, rgba(4,2,10,.7) 100%);
+  }
+  @keyframes fog{ 0%{opacity:.8;transform:translateY(0) scale(1)} 100%{opacity:1;transform:translateY(-1.4%) scale(1.04)} }
+
+  /* the dragon canvas */
+  #dragonWrap{
+    position:absolute; left:50%; bottom:2vh; transform:translateX(-50%);
+    width:min(96vh,120vw); max-width:1040px; aspect-ratio:1/1;
+    pointer-events:none; z-index:4;
+  }
+  #dragon{ width:100%; height:100%; display:block; }
+
+  /* big clock */
+  .clock{
+    position:absolute; left:0; right:0; top:29%; transform:translateY(-50%);
+    text-align:center; z-index:5; pointer-events:none;
+  }
+  .time{
+    font-size:clamp(56px,13vw,176px);
+    font-weight:900; letter-spacing:.005em; line-height:.9;
+    font-variant-numeric:tabular-nums; font-feature-settings:"tnum";
+    color:var(--ink);
+    text-shadow:0 0 60px rgba(7,5,16,.96), 0 6px 44px rgba(7,5,16,.92), 0 0 2px rgba(0,0,0,.6);
+    transition:color .55s, text-shadow .55s;
+  }
+  .state-text{
+    margin-top:clamp(12px,2.2vh,28px);
+    font-size:clamp(15px,3.2vw,30px); font-weight:700; letter-spacing:.3em;
+    color:var(--ink-dim); transition:color .55s; text-transform:none;
+  }
+
+  /* candles */
+  #candles{
+    position:absolute; left:0; right:0; bottom:clamp(20px,4vh,46px);
+    display:flex; justify-content:center; align-items:flex-end; gap:clamp(20px,5vw,72px);
+    z-index:6; pointer-events:none;
+  }
+  .candle{ position:relative; width:clamp(14px,2.4vw,26px); opacity:.16; transition:opacity .8s; }
+  .candle .stick{
+    width:100%; height:clamp(34px,7vh,70px);
+    background:linear-gradient(180deg,#efe3c6,#bcaa82 58%,#8a7a58);
+    border-radius:4px 4px 2px 2px; box-shadow:0 2px 6px rgba(0,0,0,.5), inset 0 0 4px rgba(0,0,0,.25);
+  }
+  .candle .flame{
+    position:absolute; left:50%; top:0; transform:translate(-50%,-92%) scale(0);
+    width:clamp(13px,2.1vw,22px); height:clamp(26px,4.6vh,46px);
+    background:radial-gradient(50% 60% at 50% 70%, #fff6d8 0%, var(--candle-glow) 28%, var(--candle) 60%, rgba(255,120,30,.12) 100%);
+    border-radius:50% 50% 48% 48% / 62% 62% 40% 40%;
+    filter:blur(.4px);
+    transform-origin:bottom center;
+    transition:transform .5s cubic-bezier(.2,1.4,.4,1);
+  }
+  .candle .halo{
+    position:absolute; left:50%; top:-6%; transform:translate(-50%,-50%);
+    width:clamp(60px,11vw,120px); height:clamp(60px,11vw,120px);
+    background:radial-gradient(circle, rgba(255,180,90,.52) 0%, rgba(255,150,60,.13) 45%, transparent 70%);
+    opacity:0; transition:opacity .8s; pointer-events:none;
+  }
+  .candle.lit{ opacity:1; }
+  .candle.lit .flame{ transform:translate(-50%,-92%) scale(1); animation:flick 1.6s ease-in-out infinite; }
+  .candle.lit .halo{ opacity:1; animation:halo 2.4s ease-in-out infinite; }
+  @keyframes flick{
+    0%,100%{transform:translate(-50%,-92%) scale(1) rotate(-2deg)}
+    50%{transform:translate(-50%,-94%) scale(1.06,1.1) rotate(2deg)}
+  }
+  @keyframes halo{0%,100%{opacity:.82}50%{opacity:1}}
+
+  /* noise gauge */
+  #gauge{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:clamp(96px,16vh,150px);
+    width:min(420px,60vw); height:6px; border-radius:99px;
+    background:rgba(255,255,255,.06); overflow:hidden; z-index:7;
+    box-shadow:0 0 0 1px rgba(255,255,255,.05);
+  }
+  #gaugeFill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg,#2f8f6a,#e9c46a 55%,#ff3b30);
+    border-radius:99px; transition:width .18s linear;
+  }
+  #gauge.hidden{display:none}
+
+  .db-readout{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:clamp(118px,19vh,182px);
+    text-align:center; z-index:7; opacity:0; transition:opacity .4s;
+    pointer-events:none; font-variant-numeric:tabular-nums;
+  }
+  .db-readout.show{opacity:1}
+  .db-readout .num{ line-height:1; }
+  .db-readout .num b{ font-size:clamp(26px,5vw,46px); font-weight:900; color:var(--ink); }
+  .db-readout .num span{ font-size:clamp(13px,2.2vw,20px); font-weight:700; color:var(--ink-dim); margin-left:5px; letter-spacing:.05em; }
+  .db-readout .cap{ font-size:12px; letter-spacing:.2em; color:var(--ink-dim); margin-top:6px; transition:color .4s; }
+
+  /* noise warning line on the gauge — shows where the dragon wakes */
+  #gauge{ height:8px; }
+  #gaugeMark{
+    position:absolute; top:-5px; bottom:-5px; left:52%; width:2px;
+    background:rgba(255,90,70,.9); border-radius:2px; z-index:2;
+    box-shadow:0 0 7px rgba(255,60,45,.85);
+  }
+  #gaugeMark::after{
+    content:"경고선"; position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+    font-size:9px; font-weight:800; letter-spacing:.12em; color:#ff7a6d; white-space:nowrap;
+  }
+
+  /* big unmistakable "quiet please" alert (appears when the dragon wakes) */
+  .alert{
+    position:absolute; top:12.5%; left:50%; transform:translateX(-50%) translateY(-10px);
+    z-index:10; pointer-events:none; text-align:center;
+    padding:15px 34px; border-radius:20px;
+    background:linear-gradient(180deg, rgba(255,59,48,.24), rgba(120,10,6,.30));
+    border:1px solid rgba(255,90,70,.55);
+    box-shadow:0 12px 44px rgba(255,40,30,.30), inset 0 1px 0 rgba(255,255,255,.14);
+    backdrop-filter:blur(5px);
+    opacity:0; transition:opacity .38s, transform .38s;
+  }
+  .alert .big{
+    display:flex; align-items:center; justify-content:center; gap:13px;
+    font-size:clamp(23px,4.8vw,42px); font-weight:900; letter-spacing:.16em;
+    color:#ffdad5; text-shadow:0 0 28px rgba(255,60,45,.6);
+  }
+  .alert .big .ic{ font-size:1.05em; filter:drop-shadow(0 0 10px rgba(255,80,60,.7)); }
+  .alert .small{ margin-top:7px; font-size:clamp(12px,2.2vw,15px); color:#ffb3ab; letter-spacing:.12em; }
+  body[data-level="4"] .alert, body[data-level="5"] .alert{ opacity:1; transform:translateX(-50%) translateY(0); }
+  body[data-level="5"] .alert{ animation:alertPulse .72s ease-in-out infinite; }
+  @keyframes alertPulse{ 0%,100%{box-shadow:0 12px 44px rgba(255,40,30,.30)} 50%{box-shadow:0 12px 60px rgba(255,40,30,.66)} }
+
+  /* calibration pill — while learning the room's quiet baseline */
+  .calib{
+    position:absolute; left:50%; top:43%; transform:translateX(-50%);
+    z-index:9; font-size:13px; letter-spacing:.14em; color:var(--gold);
+    background:rgba(10,8,18,.62); border:1px solid rgba(233,196,106,.35);
+    padding:9px 18px; border-radius:99px; backdrop-filter:blur(4px); display:none;
+  }
+  .calib.show{ display:block; animation:calibP 1.2s ease-in-out infinite; }
+  @keyframes calibP{ 0%,100%{opacity:.55} 50%{opacity:1} }
+
+  /* mic-failed banner — make silent failure impossible to miss */
+  .micfail{
+    position:absolute; left:50%; top:16px; transform:translateX(-50%);
+    z-index:11; max-width:min(540px,92vw); text-align:center;
+    background:rgba(60,10,8,.72); border:1px solid rgba(255,90,70,.5);
+    padding:13px 20px; border-radius:14px; backdrop-filter:blur(5px);
+    font-size:13px; line-height:1.75; color:#ffcfc9; display:none;
+  }
+  .micfail.show{ display:block; }
+  .micfail b{ color:#ff8a7d; }
+
+  /* corner controls */
+  .controls{ position:absolute; top:20px; right:22px; display:flex; gap:10px; z-index:9; }
+  .controls button{
+    width:46px; height:46px; border-radius:12px; cursor:pointer;
+    border:1px solid var(--line); background:rgba(10,8,18,.55);
+    color:var(--ink-dim); display:flex; align-items:center; justify-content:center;
+    transition:.16s; backdrop-filter:blur(4px);
+  }
+  .controls button:hover{color:var(--ink);border-color:rgba(233,196,106,.4)}
+  .controls svg{width:20px;height:20px}
+  .mic-state{
+    position:absolute; top:24px; left:24px; z-index:9;
+    display:flex; align-items:center; gap:9px;
+    font-size:12.5px; color:var(--ink-dim); letter-spacing:.08em;
+    background:rgba(10,8,18,.5); border:1px solid var(--line);
+    padding:8px 13px; border-radius:99px; backdrop-filter:blur(4px);
+  }
+  .mic-dot{width:8px;height:8px;border-radius:50%;background:#5cd6a0;box-shadow:0 0 8px #5cd6a0}
+  .mic-state.off .mic-dot{background:#ff6b5c;box-shadow:0 0 8px #ff6b5c}
+
+  /* level-driven atmosphere */
+  #timer{ --wake:0; }
+  #dragonBody{ opacity:calc(.18 + .82*var(--wake,0)); transition:opacity .85s ease; }
+  #eyeL, #eyeR{
+    transform-box:fill-box; transform-origin:center;
+    transition:transform .55s cubic-bezier(.3,1.2,.4,1), opacity .55s;
+  }
+  #eyeL{ transform:scaleY(var(--openL,0)); opacity:var(--openL,0); }
+  #eyeR{ transform:scaleY(var(--openR,0)); opacity:var(--openR,0); }
+
+  /* glossy living iris */
+  .iris{ fill:url(#irisGrad); transition:fill .5s; }
+  .eyehalo{
+    fill:var(--eyec,#ffd84d); transition:fill .5s;
+    transform-box:fill-box; transform-origin:center;
+    animation:eyeGlow 3.4s ease-in-out infinite;
+  }
+  #eyeR .eyehalo{ animation-delay:.7s; }
+  @keyframes eyeGlow{ 0%,100%{opacity:.34; transform:scale(.96)} 50%{opacity:.6; transform:scale(1.08)} }
+
+  /* slit pupil gently dilates — feels alive */
+  .pupil{ transform-box:fill-box; transform-origin:center; animation:pupilBreathe 4.2s ease-in-out infinite; }
+  #eyeR .pupil{ animation-delay:.5s; }
+  @keyframes pupilBreathe{ 0%,100%{transform:scaleX(1)} 50%{transform:scaleX(1.24)} }
+
+  /* anime sparkle highlights twinkle */
+  .spark{ fill:#fff; }
+  .spark-a{ transform-box:fill-box; transform-origin:center; animation:twinkle 3s ease-in-out infinite; }
+  #eyeR .spark-a{ animation-delay:.9s; }
+  @keyframes twinkle{ 0%,100%{opacity:.95; transform:scale(1)} 50%{opacity:.4; transform:scale(.72)} }
+
+  /* fibrous iris + soft cat-eye lids */
+  .fibers,.irisStreak,.pupil-sheen,.lidUpper,.lidLower,.lidLine,.socket{ pointer-events:none; }
+  /* closed-eye crease: visible only while the eye is (nearly) shut */
+  .shutLine,.shutLash{ pointer-events:none; transition:opacity .55s; }
+  #lidsL .shutLine,#lidsL .shutLash{ opacity:calc(1 - var(--openL,0)*2.4); }
+  #lidsR .shutLine,#lidsR .shutLash{ opacity:calc(1 - var(--openR,0)*2.4); }
+  /* upper-lid blink sweeps the whole aperture */
+  .blinkLid{ transform-box:fill-box; transform-origin:center top; transform:scaleY(0);
+        animation:blink 6.4s ease-in-out infinite; }
+  #eyeR .blinkLid{ animation-delay:.22s; }
+  @keyframes blink{ 0%,88%,100%{transform:scaleY(0)} 92%{transform:scaleY(1.04)} 96%{transform:scaleY(0)} }
+  .rage-veil{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 75%, rgba(255,40,30,.22), transparent 60%);
+    opacity:0; transition:opacity .6s;
+  }
+  body[data-level="4"] .rage-veil{opacity:.5}
+  body[data-level="5"] .rage-veil{opacity:1}
+
+  @keyframes shake{
+    0%,100%{transform:translate(-50%,0)}
+    20%{transform:translate(calc(-50% - 5px),3px)}
+    40%{transform:translate(calc(-50% + 5px),-2px)}
+    60%{transform:translate(calc(-50% - 3px),2px)}
+    80%{transform:translate(calc(-50% + 3px),-3px)}
+  }
+  body[data-level="5"] #dragonWrap{ animation:shake .35s linear infinite; }
+
+  /* ===================== DONE SCREEN ===================== */
+  #done{
+    position:fixed; inset:0; display:none; z-index:40;
+    flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(120% 100% at 50% 40%, var(--abyss-2), var(--abyss) 75%);
+  }
+  #done.show{display:flex}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  #done .done-eye{ margin-bottom:14px; }
+  #done .cute-dragon{ display:block; filter:drop-shadow(0 18px 34px rgba(0,0,0,.55)); }
+  .cd-bob{ transform-box:fill-box; transform-origin:center bottom; animation:cdBob 2.8s ease-in-out infinite; }
+  @keyframes cdBob{ 0%,100%{transform:translateY(0) scaleY(1)} 50%{transform:translateY(-9px) scaleY(1.015)} }
+  .cd-eyes{ transform-box:fill-box; transform-origin:center; animation:cdBlink 4.6s ease-in-out infinite; }
+  @keyframes cdBlink{ 0%,93%,100%{transform:scaleY(1)} 96.5%{transform:scaleY(.12)} }
+  #done h2{
+    font-size:clamp(30px,6vw,56px); font-weight:900; letter-spacing:.1em;
+    color:var(--gold); text-align:center;
+    text-shadow:0 0 40px rgba(233,196,106,.3);
+  }
+  #done p{ margin-top:18px; color:var(--ink-dim); font-size:clamp(14px,2.6vw,19px); letter-spacing:.1em; }
+  #done button{
+    margin-top:40px; padding:15px 38px; border:1px solid var(--gold); border-radius:14px;
+    background:transparent; color:var(--gold); font-size:16px; font-weight:800; letter-spacing:.1em;
+    cursor:pointer; transition:.18s; font-family:inherit;
+  }
+  #done button:hover{background:rgba(233,196,106,.1)}
+
+  @media (prefers-reduced-motion: reduce){
+    .candle.lit .flame,.candle.lit .halo,body[data-level="5"] #dragonWrap,#timer::before{animation:none!important}
+    .eyehalo,.pupil,.spark-a,.blinkLid,.cd-bob,.cd-eyes,.alert,.calib.show{animation:none!important}
+    .blinkLid{transform:scaleY(0)!important}
+  }
+  @media (max-width:540px){
+    #gauge{bottom:120px}
+    .controls{top:14px;right:14px}
+    .mic-state{top:16px;left:16px}
+    .panel{padding:26px 20px 28px}
+  }
+</style>
+</head>
+<body data-level="0">
+
+  <!-- ===== SETUP ===== -->
+  <div id="setup">
+    <div class="brand">
+      <div class="eyemark">
+        <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+          <defs>
+            <radialGradient id="markIris" cx="42%" cy="36%" r="70%">
+              <stop offset="0%" stop-color="#fff7d6"/>
+              <stop offset="45%" stop-color="#e9c46a"/>
+              <stop offset="100%" stop-color="#7a5a18"/>
+            </radialGradient>
+          </defs>
+          <path d="M4 32 C18 18 46 18 60 32 C46 46 18 46 4 32 Z" fill="none" stroke="#e9c46a" stroke-width="2.4" opacity=".6"/>
+          <ellipse cx="32" cy="32" rx="12" ry="11" fill="url(#markIris)"/>
+          <ellipse cx="32" cy="32" rx="4" ry="9.5" fill="#100a04"/>
+          <circle cx="28.5" cy="28" r="2" fill="#fff" opacity=".9"/>
+        </svg>
+      </div>
+      <h1>침묵의 눈</h1>
+      <div class="sub">잠든 용은 고요를 좋아합니다.<br>떠들면 용이 깨어나요.</div>
+    </div>
+
+    <div class="panel">
+      <div class="field">
+        <div class="row-label">무엇에 쓸까요</div>
+        <div class="seg" id="modeSeg">
+          <button data-mode="exam" class="on">시험 모드</button>
+          <button data-mode="class">수업 모드</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="row-label">시간</div>
+        <div class="chips" id="presetChips"></div>
+        <div class="custom">
+          <span>직접 입력</span>
+          <input id="customMin" type="number" min="1" max="240" inputmode="numeric" placeholder="분">
+          <span>분</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="row-label">교실이 얼마나 조용해야 하나요</div>
+        <div class="sens" id="sensSeg">
+          <button data-sens="loose"><span class="t">너그럽게</span>웅성거림 OK</button>
+          <button data-sens="normal" class="on"><span class="t">보통</span>일반 교실</button>
+          <button data-sens="strict"><span class="t">엄격하게</span>완전한 침묵</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="row-label">소음 수치(dB) 표시</div>
+        <div class="seg" id="dbSeg">
+          <button data-db="off" class="on">끄기</button>
+          <button data-db="on">켜기 — 실시간 dB 보기</button>
+        </div>
+      </div>
+
+      <button class="start" id="startBtn">용을 재우고 시작</button>
+      <div class="mic-note" id="micNote">
+        시작을 누르면 <b>마이크 사용 권한</b>을 한 번 물어봐요. 교실 소리를 듣고 용이 반응하려면 <b>허용</b>을 눌러 주세요.<br>
+        (소리는 녹음하지 않고, 시끄러운 정도만 봅니다.)
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TIMER ===== -->
+  <div id="timer">
+    <div class="rage-veil"></div>
+
+    <div class="micfail" id="micfail"></div>
+    <div class="alert" id="alert">
+      <div class="big"><span class="ic">🔇</span><span id="alertBig">조용히 하세요</span></div>
+      <div class="small" id="alertSmall">용이 깨어났어요</div>
+    </div>
+    <div class="calib" id="calib">교실 소음 기준을 맞추는 중…</div>
+
+    <div id="dragonWrap">
+      <svg id="dragon" viewBox="0 0 600 600" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+        <defs>
+          <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="var(--eyec, #ffd84d)"/>
+            <stop offset="52%" stop-color="var(--eyec, #ffd84d)"/>
+            <stop offset="100%" stop-color="rgba(255,160,40,0)"/>
+          </radialGradient>
+          <radialGradient id="irisGrad" cx="44%" cy="36%" r="72%">
+            <stop offset="0%" stop-color="#fffef0"/>
+            <stop offset="22%" stop-color="var(--eyec, #ffd84d)"/>
+            <stop offset="76%" stop-color="var(--eyec, #ffd84d)"/>
+            <stop offset="100%" stop-color="#0a0a06"/>
+          </radialGradient>
+          <linearGradient id="scaleGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--scaleA, #16302a)"/>
+            <stop offset="100%" stop-color="var(--scaleB, #0c211c)"/>
+          </linearGradient>
+          <linearGradient id="hornGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--scaleStroke, #2f8f6a)"/>
+            <stop offset="100%" stop-color="var(--scaleB, #0c211c)"/>
+          </linearGradient>
+          <filter id="soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+          <filter id="lidblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5.5"/></filter>
+          <clipPath id="apL"><path d="M214 350 C214 332 231 324 252 324 C273 324 290 334 290 350 C290 367 273 378 252 378 C231 378 214 366 214 350 Z"/></clipPath>
+          <clipPath id="apR"><path d="M386 350 C386 332 369 324 348 324 C327 324 310 334 310 350 C310 367 327 378 348 378 C369 378 386 366 386 350 Z"/></clipPath>
+        </defs>
+
+        <!-- 얼굴형(머리 윤곽)·수염·뿔·콧김 제거 — 어둠 속 '두 눈'만 남긴다 -->
+        <g id="dragonBody"></g>
+        <g id="breath" opacity="0"></g>
+
+        <!-- EYES: eyeball scales/fades with --open (closed when quiet, open when loud) -->
+        <g id="eyeL">
+          <ellipse class="eyehalo" cx="252" cy="351" rx="44" ry="36" fill="url(#eyeGlow)"/>
+          <g clip-path="url(#apL)">
+            <ellipse class="socket" cx="252" cy="351" rx="40" ry="32" fill="#070705"/>
+            <ellipse class="iris" cx="252" cy="349" rx="36" ry="29"/>
+            <ellipse class="irisStreak" cx="252" cy="349" rx="9" ry="27" fill="rgba(255,255,255,.10)"/>
+            <g class="fibers" id="fibersL"></g>
+            <ellipse class="limbal" cx="252" cy="349" rx="35.5" ry="28.5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="3.4"/>
+            <ellipse class="pupil" cx="252" cy="350" rx="5.4" ry="26" fill="#040406"/>
+            <ellipse class="pupil-sheen" cx="250" cy="343" rx="2.2" ry="7" fill="rgba(255,255,255,.16)"/>
+            <ellipse class="spark spark-a" cx="240" cy="335" rx="6.5" ry="5" fill="#fff"/>
+            <circle class="spark spark-b" cx="263" cy="361" r="2.4" fill="#fff" opacity=".85"/>
+            <path class="blinkLid" d="M214 350 C214 330 231 322 252 322 C273 322 290 332 290 350 C290 360 250 360 214 350 Z" fill="#070510"/>
+          </g>
+        </g>
+        <!-- static lids + closed-eye crease (stay put while the eyeball opens) -->
+        <g id="lidsL">
+          <path class="lidLine" d="M214 350 C214 332 231 324 252 324 C273 324 290 334 290 350" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2"/>
+          <path class="shutLine" d="M216 349 C234 361 270 361 288 349" fill="none" stroke="#7a8c80" stroke-width="3.4" stroke-linecap="round"/>
+          <path class="shutLash" d="M225 357 l-5 5 M252 360 l0 6 M279 357 l5 5" fill="none" stroke="#7a8c80" stroke-width="2.4" stroke-linecap="round"/>
+        </g>
+        <g id="eyeR">
+          <ellipse class="eyehalo" cx="348" cy="351" rx="44" ry="36" fill="url(#eyeGlow)"/>
+          <g clip-path="url(#apR)">
+            <ellipse class="socket" cx="348" cy="351" rx="40" ry="32" fill="#070705"/>
+            <ellipse class="iris" cx="348" cy="349" rx="36" ry="29"/>
+            <ellipse class="irisStreak" cx="348" cy="349" rx="9" ry="27" fill="rgba(255,255,255,.10)"/>
+            <g class="fibers" id="fibersR"></g>
+            <ellipse class="limbal" cx="348" cy="349" rx="35.5" ry="28.5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="3.4"/>
+            <ellipse class="pupil" cx="348" cy="350" rx="5.4" ry="26" fill="#040406"/>
+            <ellipse class="pupil-sheen" cx="346" cy="343" rx="2.2" ry="7" fill="rgba(255,255,255,.16)"/>
+            <ellipse class="spark spark-a" cx="336" cy="335" rx="6.5" ry="5" fill="#fff"/>
+            <circle class="spark spark-b" cx="359" cy="361" r="2.4" fill="#fff" opacity=".85"/>
+            <path class="blinkLid" d="M386 350 C386 330 369 322 348 322 C327 322 310 332 310 350 C310 360 350 360 386 350 Z" fill="#070510"/>
+          </g>
+        </g>
+        <g id="lidsR">
+          <path class="lidLine" d="M386 350 C386 332 369 324 348 324 C327 324 310 334 310 350" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2"/>
+          <path class="shutLine" d="M384 349 C366 361 330 361 312 349" fill="none" stroke="#7a8c80" stroke-width="3.4" stroke-linecap="round"/>
+          <path class="shutLash" d="M375 357 l5 5 M348 360 l0 6 M321 357 l-5 5" fill="none" stroke="#7a8c80" stroke-width="2.4" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div id="candles"></div>
+    <div class="db-readout" id="dbReadout">
+      <div class="num"><b id="dbNum">--</b><span>dB</span></div>
+      <div class="cap" id="dbCap">측정 중</div>
+    </div>
+    <div id="gauge"><div id="gaugeFill"></div><div id="gaugeMark"></div></div>
+
+    <div class="clock">
+      <div class="time" id="timeText">00:00</div>
+      <div class="state-text" id="stateText">고요함</div>
+    </div>
+
+    <div class="mic-state" id="micState"><span class="mic-dot"></span><span id="micLabel">교실 소리를 듣는 중</span></div>
+
+    <div class="controls">
+      <button id="pauseBtn" title="잠시 멈춤">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      </button>
+      <button id="stopBtn" title="끝내기">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== DONE ===== -->
+  <div id="done">
+    <div class="done-eye">
+      <svg class="cute-dragon" viewBox="0 0 240 260" width="216" height="234" aria-hidden="true">
+        <defs>
+          <radialGradient id="cdGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(233,196,106,.32)"/>
+            <stop offset="100%" stop-color="rgba(233,196,106,0)"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="120" cy="138" rx="124" ry="124" fill="url(#cdGlow)"/>
+        <g class="cd-bob">
+          <!-- tail -->
+          <path d="M170 198 C214 202 218 166 198 154 C208 176 188 186 170 180 Z" fill="#56a85f"/>
+          <!-- back spike -->
+          <path d="M120 34 l11 18 l-22 0 Z" fill="#edd98a"/>
+          <!-- horns -->
+          <path d="M96 58 C92 36 88 24 96 14 C104 26 105 44 108 58 Z" fill="#edd98a" stroke="#d6c073" stroke-width="1.4"/>
+          <path d="M144 58 C148 36 152 24 144 14 C136 26 135 44 132 58 Z" fill="#edd98a" stroke="#d6c073" stroke-width="1.4"/>
+          <!-- arms -->
+          <ellipse cx="56" cy="166" rx="18" ry="23" fill="#5cb064"/>
+          <ellipse cx="184" cy="166" rx="18" ry="23" fill="#5cb064"/>
+          <!-- feet -->
+          <ellipse cx="92" cy="236" rx="23" ry="16" fill="#5cb064"/>
+          <ellipse cx="148" cy="236" rx="23" ry="16" fill="#5cb064"/>
+          <ellipse cx="92" cy="240" rx="11" ry="7" fill="#f2e3a8"/>
+          <ellipse cx="148" cy="240" rx="11" ry="7" fill="#f2e3a8"/>
+          <!-- body -->
+          <path d="M120 58 C64 58 42 104 42 150 C42 208 78 240 120 240 C162 240 198 208 198 150 C198 104 176 58 120 58 Z" fill="#6cc174"/>
+          <!-- belly -->
+          <ellipse cx="120" cy="178" rx="46" ry="55" fill="#f2e3a8"/>
+          <path d="M84 160 C100 168 140 168 156 160" fill="none" stroke="#e2cd86" stroke-width="3" stroke-linecap="round"/>
+          <path d="M82 185 C100 193 140 193 158 185" fill="none" stroke="#e2cd86" stroke-width="3" stroke-linecap="round"/>
+          <path d="M86 210 C102 217 138 217 154 210" fill="none" stroke="#e2cd86" stroke-width="3" stroke-linecap="round"/>
+          <!-- cheeks -->
+          <ellipse cx="80" cy="124" rx="11" ry="8" fill="#f4a8a0" opacity=".75"/>
+          <ellipse cx="160" cy="124" rx="11" ry="8" fill="#f4a8a0" opacity=".75"/>
+          <!-- muzzle -->
+          <ellipse cx="120" cy="128" rx="31" ry="22" fill="#7ecb84"/>
+          <!-- nostrils -->
+          <ellipse cx="111" cy="120" rx="2.3" ry="3" fill="#3c7a45"/>
+          <ellipse cx="129" cy="120" rx="2.3" ry="3" fill="#3c7a45"/>
+          <!-- mouth -->
+          <path d="M108 134 C114 142 126 142 132 134" fill="none" stroke="#3c7a45" stroke-width="2.6" stroke-linecap="round"/>
+          <!-- eyes -->
+          <g class="cd-eyes">
+            <ellipse cx="98" cy="104" rx="7.5" ry="9" fill="#22323a"/>
+            <ellipse cx="142" cy="104" rx="7.5" ry="9" fill="#22323a"/>
+            <circle cx="100.6" cy="100.4" r="2.4" fill="#fff"/>
+            <circle cx="144.6" cy="100.4" r="2.4" fill="#fff"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <h2 id="doneTitle">시험이 종료되었습니다</h2>
+    <p id="doneSub">용이 다시 깊은 잠에 들었습니다.</p>
+    <button id="againBtn">다시 시작</button>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const body = document.body;
+
+  /* ---------- config ---------- */
+  const PRESETS = {
+    exam:  [{m:30,l:"쪽지시험"},{m:40,l:"단원평가"},{m:50,l:"기본"},{m:60,l:"긴 시험"},{m:90,l:"모의고사"}],
+    class: [{m:1,l:"생각"},{m:3,l:"활동"},{m:5,l:"문제풀이"},{m:10,l:"발표준비"},{m:15,l:"모둠"}]
+  };
+  // sensitivity: how many dB ABOVE the room's own quiet baseline counts as "noisy".
+  // (relative to a self-calibrated floor, so it works on any device / room)
+  const SENS = {
+    loose:  {over:28, gain:0.85},  // 웅성거림 OK — 꽤 커져야 반응
+    normal: {over:19, gain:1.0},   // 일반 교실 — 주변보다 확실히 커야 반응
+    strict: {over:12, gain:1.3}    // 완전한 침묵 — 작은 소리에도 반응
+  };
+  const STATE_WORDS = ["고요함","조용히…","쉿 — 용이 뒤척여요","용이 눈을 떴어요","용이 고개를 들었어요","용이 깨어났습니다!"];
+  const STATE_COLOR = ["#7fce86","#7fce86","#d8c25a","#ffc24a","#ff8a3a","#ff3b30"];
+  const EYE_COLOR   = ["#57c84f","#6fce3f","#d3c038","#ffb02b","#ff7320","#ff2d20"];
+
+  let mode="exam", sens="normal", chosenMin=50, customActive=false, dbMode=false;
+
+  /* ---------- setup UI ---------- */
+  function renderChips(){
+    const wrap=$("#presetChips"); wrap.innerHTML="";
+    PRESETS[mode].forEach(p=>{
+      const b=document.createElement("button");
+      b.className="chip"+(!customActive && p.m===chosenMin?" on":"");
+      b.innerHTML=p.m+"<small>"+p.l+"</small>";
+      b.onclick=()=>{ chosenMin=p.m; customActive=false; $("#customMin").value=""; renderChips(); };
+      wrap.appendChild(b);
+    });
+  }
+  $("#modeSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...$("#modeSeg").children].forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); mode=b.dataset.mode;
+    chosenMin=PRESETS[mode][2].m; customActive=false; $("#customMin").value="";
+    renderChips();
+  });
+  $("#sensSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...$("#sensSeg").children].forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); sens=b.dataset.sens;
+  });
+  $("#dbSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...$("#dbSeg").children].forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); dbMode=(b.dataset.db==="on");
+  });
+  $("#customMin").addEventListener("input",e=>{
+    const v=parseInt(e.target.value,10);
+    if(v>0){ customActive=true; chosenMin=Math.min(v,240); [...$("#presetChips").children].forEach(x=>x.classList.remove("on")); }
+    else { customActive=false; renderChips(); }
+  });
+  renderChips();
+
+  /* ---------- candles ---------- */
+  const candleWrap=$("#candles");
+  for(let i=0;i<5;i++){
+    const c=document.createElement("div"); c.className="candle";
+    c.innerHTML='<div class="halo"></div><div class="flame"></div><div class="stick"></div>';
+    candleWrap.appendChild(c);
+  }
+  const candles=[...document.querySelectorAll(".candle")];
+
+  /* ---------- fibrous iris detail ---------- */
+  (function buildFibers(){
+    const NS="http://www.w3.org/2000/svg";
+    function addFibers(group, cx, cy, rx, ry){
+      if(!group) return;
+      let seed=cx*7.31+cy*1.7;
+      const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+      const N=96;
+      for(let i=0;i<N;i++){
+        const a=(i/N)*Math.PI*2 + (rnd()-0.5)*0.05;
+        const inR=0.16+rnd()*0.07;
+        const outR=0.80+rnd()*0.20;
+        const x1=(cx+Math.cos(a)*rx*inR).toFixed(1), y1=(cy+Math.sin(a)*ry*inR).toFixed(1);
+        const x2=(cx+Math.cos(a)*rx*outR).toFixed(1), y2=(cy+Math.sin(a)*ry*outR).toFixed(1);
+        const ln=document.createElementNS(NS,"line");
+        ln.setAttribute("x1",x1); ln.setAttribute("y1",y1);
+        ln.setAttribute("x2",x2); ln.setAttribute("y2",y2);
+        const light=i%2===0;
+        const al=(0.16+rnd()*0.32).toFixed(2);
+        ln.setAttribute("stroke", light? "rgba(255,255,255,"+al+")" : "rgba(0,0,0,"+al+")");
+        ln.setAttribute("stroke-width",(0.5+rnd()*0.85).toFixed(2));
+        ln.setAttribute("stroke-linecap","round");
+        group.appendChild(ln);
+      }
+    }
+    addFibers(document.querySelector("#fibersL"),252,349,34,27);
+    addFibers(document.querySelector("#fibersR"),348,349,34,27);
+  })();
+
+  /* ---------- 살아있는 눈: 잠 · 주기적 둘러보기 · 반만 깸 · 소음 반응 ---------- */
+  const dragonEl=$("#dragon");
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const eyeEls=[
+    {pupil:document.querySelector("#eyeL .pupil"), sheen:document.querySelector("#eyeL .pupil-sheen"), px:252, py:350, sx:250, sy:343},
+    {pupil:document.querySelector("#eyeR .pupil"), sheen:document.querySelector("#eyeR .pupil-sheen"), px:348, py:350, sx:346, sy:343}
+  ];
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  let stirOpen=0, stirTarget=0, eyePhase="sleep", phaseT=0, glanceNext=0;
+  let gx=0, gy=0, gtx=0, gty=0;           // 눈동자 시선(현재/목표) 오프셋
+  function pickGaze(){ gtx=rnd(-11,11); gty=rnd(-5,5); }
+  function resetEyeLife(){
+    stirOpen=0; stirTarget=0; eyePhase="sleep";
+    phaseT=(performance.now())+rnd(2500,6000); gx=gy=gtx=gty=0;
+    dragonEl.style.setProperty("--openL","0"); dragonEl.style.setProperty("--openR","0");
+  }
+  function updateEyeLife(energy){
+    const now=performance.now();
+    // 소음은 항상 눈을 뜨게 한다(시끄러울수록 더 크게)
+    const noiseOpen=Math.min(1.12, energy*1.6);
+    if(reduceMotion){
+      dragonEl.style.setProperty("--openL",noiseOpen.toFixed(3));
+      dragonEl.style.setProperty("--openR",noiseOpen.toFixed(3));
+      return;
+    }
+    // 자율 뒤척임 상태기계: 잠 → (가끔) 깨어남/반만깸 → 둘러봄 → 다시 잠
+    switch(eyePhase){
+      case "sleep":
+        stirTarget=0;
+        if(now>=phaseT){
+          const half=Math.random()<0.45;                 // 어떤 땐 반만 깬다
+          stirTarget=half?0.5:1.0;
+          eyePhase="awake";
+          phaseT=now+(half?rnd(900,1700):rnd(2000,3600)); // 깨어 있는 시간
+        }
+        break;
+      case "awake":
+        if(now>=phaseT){ eyePhase="closing"; stirTarget=0; }
+        break;
+      case "closing":
+        if(stirOpen<0.03){ eyePhase="sleep"; phaseT=now+rnd(5000,12000); } // 다음 뒤척임까지
+        break;
+    }
+    stirOpen += (stirTarget - stirOpen)*0.06;             // 부드럽게 뜨고 감음
+    const open=Math.max(stirOpen, noiseOpen);
+    // 눈이 충분히 떠 있으면 주변을 두리번거린다
+    if(open>0.25){
+      if(now>=glanceNext){ pickGaze(); glanceNext=now+rnd(650,1500); }
+    }else{ gtx=0; gty=0; }                                // 잠들면 시선은 정면으로
+    gx += (gtx-gx)*0.08; gy += (gty-gy)*0.08;
+    dragonEl.style.setProperty("--openL", open.toFixed(3));
+    dragonEl.style.setProperty("--openR", (open*0.985).toFixed(3));
+    eyeEls.forEach(e=>{ if(!e.pupil) return;
+      e.pupil.setAttribute("cx",(e.px+gx).toFixed(1));
+      e.pupil.setAttribute("cy",(e.py+gy).toFixed(1));
+      if(e.sheen){ e.sheen.setAttribute("cx",(e.sx+gx).toFixed(1)); e.sheen.setAttribute("cy",(e.sy+gy).toFixed(1)); }
+    });
+  }
+
+  /* ---------- audio / mic ---------- */
+  let audioCtx=null, analyser=null, micStream=null, micData=null, micOK=false;
+  async function initMic(){
+    try{
+      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const src=audioCtx.createMediaStreamSource(micStream);
+      analyser=audioCtx.createAnalyser(); analyser.fftSize=512; analyser.smoothingTimeConstant=0.5;
+      src.connect(analyser);
+      micData=new Uint8Array(analyser.fftSize);
+      micOK=true;
+    }catch(err){ micOK=false; }
+  }
+  function readVolume(){
+    if(!micOK) return 0;
+    analyser.getByteTimeDomainData(micData);
+    let sum=0;
+    for(let i=0;i<micData.length;i++){ const v=(micData[i]-128)/128; sum+=v*v; }
+    return Math.sqrt(sum/micData.length); // RMS ~0..1
+  }
+  // instantaneous loudness in dBFS (negative; louder → closer to 0)
+  function rmsToDbfs(rms){ return 20*Math.log10(Math.max(rms,1e-7)); }
+
+  /* ---------- chime on finish (the only sound) ---------- */
+  function playChime(){
+    try{
+      const ctx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+      const now=ctx.currentTime;
+      [0,0.18,0.36].forEach((t,i)=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sine"; o.frequency.value=[523.25,659.25,783.99][i];
+        g.gain.setValueAtTime(0,now+t);
+        g.gain.linearRampToValueAtTime(0.22,now+t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+t+1.6);
+        o.connect(g).connect(ctx.destination); o.start(now+t); o.stop(now+t+1.7);
+      });
+    }catch(e){}
+  }
+
+  /* ---------- timer engine ---------- */
+  let totalSec=0, leftSec=0, tickId=null, rafId=null, paused=false;
+  let energy=0;       // accumulated "noise tension" 0..1
+  let level=0, displayLevel=-1;
+  // self-calibrating noise floor (learned from the room itself)
+  let floorDb=-60, smDb=-60;                 // adaptive ambient floor + smoothed level
+  let calibrating=false, calibUntil=0, calibMin=Infinity;
+  let dbShown=40;                            // smoothed on-screen dB number
+
+  function fmt(s){
+    s=Math.max(0,Math.round(s));
+    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+    const pad=n=>String(n).padStart(2,"0");
+    return h>0 ? h+":"+pad(m)+":"+pad(sec) : pad(m)+":"+pad(sec);
+  }
+
+  function applyLevel(L){
+    if(L===displayLevel) return;
+    displayLevel=L;
+    body.dataset.level=L;
+    const wake=[0,0.05,0.35,0.62,0.85,1][L];
+    const d=$("#dragon"); const T=$("#timer");
+    T.style.setProperty("--wake",wake);
+    d.style.setProperty("--wake",wake);
+    // 눈 열림(--openL/--openR)은 updateEyeLife()가 매 프레임 제어한다(자율 뒤척임 + 소음 반응)
+    d.style.setProperty("--eyec", EYE_COLOR[L]);
+    d.style.setProperty("--scaleStroke", L>=4? "#7fcf9e" : "#2f8f6a");
+    d.style.setProperty("--scaleA", L>=4? "#1d4f3e":"#16302a");
+    d.style.setProperty("--scaleB", L>=4? "#10362a":"#0c211c");
+    $("#breath").style.opacity = L>=4? (L===5?1:0.6) : 0;
+    if(level<5) $("#breath").style.animation = L>=4 ? "halo 1.4s ease-in-out infinite":"none";
+    // candles: L1->0, L2->1, L3->2, L4->3, L5->5
+    const lit=[0,0,1,2,3,5][L];
+    candles.forEach((c,i)=> c.classList.toggle("lit", i<lit));
+    // clock + state
+    $("#stateText").textContent = STATE_WORDS[L];
+    $("#stateText").style.color = STATE_COLOR[L];
+    $("#timeText").style.color = L>=5 ? "#ffd6d2" : "var(--ink)";
+  }
+
+  function loop(){
+    rafId=requestAnimationFrame(loop);
+    if(paused) return;
+    const now=performance.now();
+    const vol=readVolume();
+    const db=rmsToDbfs(vol);
+    smDb = smDb*0.7 + db*0.3;                 // smooth out per-frame jitter
+
+    // ---- learn the room's quiet baseline for the first ~1.5s ----
+    if(calibrating){
+      calibMin=Math.min(calibMin, smDb);
+      floorDb=calibMin;
+      if(now>=calibUntil){
+        calibrating=false;
+        // guard: if the room was already noisy during calibration, don't lock the
+        // floor so high that talking never registers.
+        floorDb=Math.min(floorDb, -40);
+        $("#calib").classList.remove("show");
+      }
+      $("#gaugeFill").style.width="0%";
+      updateEyeLife(0);
+      return;
+    }
+
+    // floor keeps adapting: drops fast toward new quiet, creeps up very slowly
+    if(smDb < floorDb) floorDb += (smDb-floorDb)*0.20;
+    else               floorDb += (smDb-floorDb)*0.0015;
+
+    const excess=Math.max(0, smDb-floorDb);   // how many dB above ambient
+    const cfg=SENS[sens];
+    const over=excess-cfg.over;
+    // build slowly so the dragon needs *sustained* noise (~2s) to wake — a lone
+    // cough or dropped pencil won't set off the warning.
+    if(over>0){ energy += Math.min(over,22)/22 * cfg.gain * 0.0055; }  // 더 완만하게 쌓임(지속 소음에만 반응)
+    else      { energy -= 0.013; }            // 조용해지면 더 빨리 진정 — 잠깐의 소리엔 경고 X
+    energy=Math.max(0,Math.min(1,energy));
+
+    // map energy -> level (0..5)
+    let L;
+    if(energy<0.02) L=0;
+    else if(energy<0.12) L=1;
+    else if(energy<0.30) L=2;
+    else if(energy<0.52) L=3;   // gaugeMark sits at 52% — the "wake / warn" line
+    else if(energy<0.78) L=4;
+    else L=5;
+    level=L;
+    applyLevel(L);
+    updateEyeLife(energy);
+
+    // gauge always shows "tension toward waking"; the marker is the warning line
+    $("#gaugeFill").style.width=(energy*100).toFixed(0)+"%";
+
+    // dB readout (relative-to-quiet, anchored so a hushed room reads ~40)
+    if(dbMode && micOK){
+      const inst=Math.max(35, Math.min(95, 40+excess));
+      dbShown=dbShown*0.82+inst*0.18;
+      $("#dbNum").textContent=Math.round(dbShown);
+      $("#dbNum").style.color = STATE_COLOR[L];
+      $("#dbCap").textContent = L<=1?"조용해요" : L<=2?"웅성거려요" : L<=3?"시끄러워요" : "너무 시끄러워요!";
+      $("#dbCap").style.color = STATE_COLOR[L];
+    }
+  }
+
+  function tick(){
+    leftSec--;
+    $("#timeText").textContent=fmt(leftSec);
+    if(leftSec<=0){ finish(); }
+  }
+
+  function startTimer(){
+    totalSec=leftSec=chosenMin*60;
+    $("#timeText").textContent=fmt(leftSec);
+    $("#setup").style.display="none";
+    $("#timer").classList.add("show");
+    $("#done").classList.remove("show");
+    energy=0; level=0; displayLevel=-1; paused=false;
+    floorDb=-60; smDb=-60; calibMin=Infinity; dbShown=40;
+    applyLevel(0);
+    resetEyeLife();
+    // mic state badge
+    const ms=$("#micState");
+    if(micOK){
+      ms.classList.remove("off");
+      $("#micLabel").textContent = dbMode ? "교실 소음을 측정하는 중" : "교실 소리를 듣는 중";
+      $("#gauge").classList.remove("hidden");
+      $("#dbReadout").classList.toggle("show", dbMode);
+      $("#micfail").classList.remove("show");
+      // learn the room's quiet baseline before we start reacting
+      calibrating=true; calibUntil=performance.now()+1500;
+      $("#calib").classList.add("show");
+    }else{
+      ms.classList.add("off");
+      $("#micLabel").textContent="마이크 꺼짐 — 소음 감지 안 됨";
+      $("#gauge").classList.add("hidden");
+      $("#dbReadout").classList.remove("show");
+      $("#calib").classList.remove("show");
+      calibrating=false;
+      $("#micfail").innerHTML='<b>마이크가 연결되지 않아 소음 감지·경고가 작동하지 않습니다.</b><br>'+
+        '브라우저 주소창의 마이크 권한을 <b>허용</b>으로 바꾸거나, 이 파일을 <b>https 주소(또는 localhost)</b>로 열어 주세요. '+
+        '(file:// 로 열면 마이크를 쓸 수 없어요.)';
+      $("#micfail").classList.add("show");
+    }
+    clearInterval(tickId); tickId=setInterval(tick,1000);
+    cancelAnimationFrame(rafId); loop();
+  }
+
+  function stopEngines(){
+    clearInterval(tickId); cancelAnimationFrame(rafId);
+  }
+
+  function finish(){
+    stopEngines();
+    applyLevel(0);
+    $("#timer").classList.remove("show");
+    $("#done").classList.add("show");
+    $("#doneTitle").textContent = mode==="exam" ? "시험이 종료되었습니다" : "시간이 끝났어요";
+    $("#doneSub").textContent = mode==="exam" ? "연필을 내려놓아 주세요. 용이 다시 잠들었습니다." : "다음 활동으로 넘어갈까요?";
+    playChime();
+  }
+
+  /* ---------- controls ---------- */
+  $("#startBtn").addEventListener("click", async ()=>{
+    $("#startBtn").textContent="동굴로 들어가는 중…";
+    await initMic();
+    if(audioCtx && audioCtx.state==="suspended"){ try{await audioCtx.resume();}catch(e){} }
+    $("#startBtn").textContent="용을 재우고 시작";
+    startTimer();
+  });
+  $("#pauseBtn").addEventListener("click",()=>{
+    paused=!paused;
+    if(paused){ clearInterval(tickId); $("#pauseBtn").innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; $("#stateText").textContent="잠시 멈춤"; }
+    else{ tickId=setInterval(tick,1000); $("#pauseBtn").innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'; }
+  });
+  $("#stopBtn").addEventListener("click",()=>{
+    stopEngines();
+    $("#timer").classList.remove("show");
+    $("#setup").style.display="flex";
+  });
+  $("#againBtn").addEventListener("click",()=>{
+    $("#done").classList.remove("show");
+    $("#setup").style.display="flex";
+  });
+
+  // keyboard: space = pause while timing
+  document.addEventListener("keydown",e=>{
+    if(e.code==="Space" && $("#timer").classList.contains("show")){ e.preventDefault(); $("#pauseBtn").click(); }
+  });
+})();
+</script>
+</body>
+</html>
